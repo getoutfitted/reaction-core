@@ -226,7 +226,52 @@ Template.registerHelper("formatPrice", function (currentPrice) {
   return price;
 });
 
+
+
 ReactionCore.Currency = {};
+
+ReactionCore.Currency.formatPriceRange = function (currentPrice) {
+  let actualPrice;
+  let formattedPrice;
+  let price;
+
+  localeDep.depend();
+
+  // TODO: Refactor
+  try {
+    let prices = currentPrice.split(" - ");
+    for (actualPrice of prices) {
+      let originalPrice = actualPrice;
+      if (ReactionCore.Locale) {
+        if (ReactionCore.Locale.currency) {
+          if (ReactionCore.Locale.exchangeRate) {
+            if (ReactionCore.Locale.exchangeRate.rate) {
+              actualPrice = actualPrice * ReactionCore.Locale.exchangeRate.rate;
+            }
+          }
+        }
+        formattedPrice = accounting.formatMoney(actualPrice, ReactionCore.Locale
+          .currency);
+        price = currentPrice.replace(originalPrice, formattedPrice);
+      }
+    }
+  } catch (error) {
+    ReactionCore.Log.debug("currency error, fallback to shop currency");
+    if (ReactionCore.Locale) {
+      if (ReactionCore.Locale.currency) {
+        if (ReactionCore.Locale.exchangeRate) {
+          if (ReactionCore.Locale.exchangeRate.rate) {
+            price = price * ReactionCore.Locale.exchangeRate.Rate;
+            price = accounting.formatMoney(price, ReactionCore.Locale.currency);
+          }
+        } else {
+          price = accounting.formatMoney(currentPrice, ReactionCore.Locale.currency);
+        }
+      }
+    }
+  }
+  return price;
+}
 
 ReactionCore.Currency.formatNumber = function (currentPrice) {
   let price = currentPrice;
