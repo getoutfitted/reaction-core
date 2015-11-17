@@ -226,6 +226,7 @@ Package.onUse(function (api) {
   api.addFiles("client/helpers/globals.js", "client");
   api.addFiles("client/helpers/products.js", "client");
   api.addFiles("client/helpers/i18n.js", "client");
+  api.addFiles("client/helpers/media.js", "client");
   api.addFiles("client/helpers/metadata.js", "client");
   api.addFiles("client/helpers/permissions.js", "client");
   api.addFiles("client/helpers/utilities.js", "client");

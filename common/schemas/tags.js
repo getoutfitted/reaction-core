@@ -3,6 +3,9 @@
 */
 
 ReactionCore.Schemas.Tag = new SimpleSchema({
+  _id: {
+    type: String
+  },
   name: {
     type: String,
     index: 1
