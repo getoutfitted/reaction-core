@@ -29,6 +29,61 @@ describe("core product methods", function () {
       expect(_.size(product.variants)).toEqual(2);
       return done();
     });
+
+    it(
+      "`child variant` cloned from `variant` should inherit his `_id` in `parentId` property",
+      done => {
+        let product;
+        product = Factory.create("product");
+        spyOn(ReactionCore, "hasPermission").and.returnValue(true);
+        Meteor.call("products/cloneVariant", product._id, product.variants[
+            0]._id,
+          product.variants[0]._id);
+        product = Products.findOne(product._id);
+        expect(product.variants.length).toEqual(2);
+        expect(product.variants[1].parentId).toEqual(product.variants[
+          0]._id);
+        return done();
+      });
+
+    it(
+      "cloned `variant` should have `cloneId` property equal with source `_id`",
+      done => {
+        let product;
+        product = Factory.create("product");
+        spyOn(ReactionCore, "hasPermission").and.returnValue(true);
+        Meteor.call("products/cloneVariant", product._id, product.variants[
+          0]._id);
+        product = Products.findOne(product._id);
+        expect(product.variants[1].cloneId).toEqual(product.variants[
+          0]._id);
+        return done();
+      });
+
+    it(
+      "number of `child variants` between source and cloned `variants` " +
+      "should be equal", done => {
+        let product;
+        product = Factory.create("product");
+        spyOn(ReactionCore, "hasPermission").and.returnValue(true);
+        Meteor.call("products/cloneVariant", product._id, product.variants[
+            0]._id,
+          product.variants[0]._id);
+        Meteor.call("products/cloneVariant", product._id, product.variants[
+            0]._id,
+          product.variants[0]._id);
+        Meteor.call("products/cloneVariant", product._id, product.variants[
+          0]._id);
+        product = Products.findOne(product._id);
+        expect(product.variants.length).toEqual(6);
+        return done();
+      });
+
+    it(
+      "`variant` and `child variants` media should be intherited when " +
+      "cloning", done => {
+        return done();
+      });
   });
 
   describe("products/createVariant", function () {
@@ -84,50 +139,54 @@ describe("core product methods", function () {
       return done();
     });
 
-    it("should update individual variant by admin passing in full object", function (done) {
-      let product;
-      let updatedProduct;
-      let updatedVariant;
-      let variant;
+    it(
+      "should update individual variant by admin passing in full object",
+      function (done) {
+        let product;
+        let updatedProduct;
+        let updatedVariant;
+        let variant;
 
-      spyOn(Roles, "userIsInRole").and.returnValue(true);
+        spyOn(Roles, "userIsInRole").and.returnValue(true);
 
-      product = Factory.create("product");
-      variant = product.variants[0];
-      variant["title"] = "Updated Title";
-      variant["price"] = 7;
-      Meteor.call("products/updateVariant", variant);
-      updatedProduct = Products.find({
-        "variants._id": variant._id
-      }).fetch()[0];
-      updatedVariant = updatedProduct.variants[0];
-      expect(updatedVariant.price).toEqual(7);
-      expect(updatedVariant.title).toEqual("Updated Title");
-      return done();
-    });
-
-    it("should update individual variant by admin passing in partial object", function (done) {
-      let product;
-      let updatedProduct;
-      let updatedVariant;
-      let variant;
-      spyOn(Roles, "userIsInRole").and.returnValue(true);
-      product = Factory.create("product");
-      variant = product.variants[0];
-      Meteor.call("products/updateVariant", {
-        _id: variant._id,
-        title: "Updated Title",
-        price: 7
+        product = Factory.create("product");
+        variant = product.variants[0];
+        variant["title"] = "Updated Title";
+        variant["price"] = 7;
+        Meteor.call("products/updateVariant", variant);
+        updatedProduct = Products.find({
+          "variants._id": variant._id
+        }).fetch()[0];
+        updatedVariant = updatedProduct.variants[0];
+        expect(updatedVariant.price).toEqual(7);
+        expect(updatedVariant.title).toEqual("Updated Title");
+        return done();
       });
-      updatedProduct = Products.find({
-        "variants._id": variant._id
-      }).fetch()[0];
-      updatedVariant = updatedProduct.variants[0];
-      expect(updatedVariant.price).toEqual(7);
-      expect(updatedVariant.title).toEqual("Updated Title");
-      expect(updatedVariant.optionTitle).toEqual(variant.optionTitle);
-      return done();
-    });
+
+    it(
+      "should update individual variant by admin passing in partial object",
+      function (done) {
+        let product;
+        let updatedProduct;
+        let updatedVariant;
+        let variant;
+        spyOn(Roles, "userIsInRole").and.returnValue(true);
+        product = Factory.create("product");
+        variant = product.variants[0];
+        Meteor.call("products/updateVariant", {
+          _id: variant._id,
+          title: "Updated Title",
+          price: 7
+        });
+        updatedProduct = Products.find({
+          "variants._id": variant._id
+        }).fetch()[0];
+        updatedVariant = updatedProduct.variants[0];
+        expect(updatedVariant.price).toEqual(7);
+        expect(updatedVariant.title).toEqual("Updated Title");
+        expect(updatedVariant.optionTitle).toEqual(variant.optionTitle);
+        return done();
+      });
   });
 
   describe("products/updateVariants", function () {
@@ -147,7 +206,8 @@ describe("core product methods", function () {
       return done();
     });
 
-    it("should update all variants by admin passing in array of objects",
+    it(
+      "should update all variants by admin passing in array of objects",
       function (done) {
         spyOn(Roles, "userIsInRole").and.returnValue(true);
         let product = Factory.create("product");
@@ -206,9 +266,11 @@ describe("core product methods", function () {
     it("should delete all child variants (options) by admin",
       function (done) {
         spyOn(Roles, "userIsInRole").and.returnValue(true);
+        spyOn(ReactionCore, "hasPermission").and.returnValue(true);
         let product = Factory.create("product");
         Meteor.call("products/cloneVariant", product._id, product.variants[
-          0]._id, product.variants[0]._id);
+            0]._id,
+          product.variants[0]._id);
         product = Products.findOne(product._id);
         expect(_.size(product.variants)).toEqual(2);
         Meteor.call("products/deleteVariant", product.variants[0]._id);
@@ -216,176 +278,6 @@ describe("core product methods", function () {
         expect(_.size(product.variants)).toEqual(0);
         return done();
       });
-  });
-
-  describe("products/createInventoryVariant", function () {
-    beforeEach(function () {
-      return Products.remove({});
-    });
-
-    it("should throw 403 error by non admin", function (done) {
-      spyOn(Roles, "userIsInRole").and.returnValue(false);
-      let product = Factory.create("product");
-      let variant = product.variants[0];
-      spyOn(Products, "update");
-      expect(function () {
-        return Meteor.call("products/createInventoryVariant",
-          product._id, variant._id);
-      }).toThrow(new Meteor.Error(403, "Access Denied"));
-      expect(Products.update).not.toHaveBeenCalled();
-      return done();
-    });
-
-    it("should create default barcode inventory variant by admin",
-      function (done) {
-        spyOn(Roles, "userIsInRole").and.returnValue(true);
-        const product = Factory.create("product");
-        const variant = product.variants[0];
-        expect(_.size(product.variants)).toEqual(1);
-        // create inventory variant
-        Meteor.call("products/createInventoryVariant", product._id,
-          variant._id);
-        // check variant
-        const newProduct = Products.findOne(product._id);
-        const newInventoryVariant = newProduct.variants[1];
-        expect(_.size(newProduct.variants)).toEqual(2);
-        expect(newInventoryVariant.type).toEqual("inventory");
-        expect(newInventoryVariant.parentId).toEqual(variant._id);
-        return done();
-      });
-
-    it("should create specific barcode inventory variant by admin", function (done) {
-      spyOn(Roles, "userIsInRole").and.returnValue(true);
-      const product = Factory.create("product");
-      const variant = product.variants[0];
-      const inventoryVariantOptions = {
-        barcode: "specificBarcode123"
-      };
-      expect(_.size(product.variants)).toEqual(1);
-      // create inventory variant
-      Meteor.call("products/createInventoryVariant", product._id,
-        variant._id, inventoryVariantOptions);
-      // cheack created inventoryVariant
-      const newProduct = Products.findOne(product._id);
-      const newInventoryVariant = newProduct.variants[1];
-      // console.log(newProduct);
-      expect(_.size(newProduct.variants)).toEqual(2);
-      expect(newInventoryVariant.type).toEqual("inventory");
-      expect(newInventoryVariant.parentId).toEqual(variant._id);
-      expect(newInventoryVariant.barcode).toEqual(
-        inventoryVariantOptions.barcode);
-      return done();
-    });
-  });
-
-  describe("products/createInventoryVariants", function () {
-    beforeEach(function () {
-      return Products.remove({});
-    });
-
-    it("should throw 403 error by non admin", function (done) {
-      spyOn(Roles, "userIsInRole").and.returnValue(false);
-      spyOn(ReactionCore.Collections.Products, "update");
-      const product = Factory.create("product");
-      const variant = product.variants[0];
-
-      expect(function () {
-        return Meteor.call("products/createInventoryVariants",
-          product._id, variant._id, 5);
-      }).toThrow(new Meteor.Error(403, "Access Denied"));
-
-      expect(Products.update).not.toHaveBeenCalled();
-      return done();
-    });
-
-    // it("should create default inventory variants by admin", function (done) {
-    //   spyOn(Roles, "userIsInRole").and.returnValue(true);
-    //   spyOn(ReactionCore.Collections.Products, "update");
-    //
-    //   const product = Factory.create("product");
-    //   const variant = product.variants[0];
-    //   const qty = _.random(1, 100);
-    //   let newQty = variant.inventoryQuantity + qty;
-    //   expect(_.size(product.variants)).toEqual(1);
-    //   // create test variant
-    //   Meteor.call("products/createInventoryVariants", product._id,
-    //     variant._id, qty);
-    //   // check new product variants
-    //   const newProduct = Products.findOne(product._id);
-    //   const newInventoryVariant = newProduct.variants[1];
-    //   expect(_.size(newProduct.variants)).toEqual(qty + 1);
-    //   expect(newInventoryVariant.type).toEqual("inventory");
-    //   expect(newInventoryVariant.parentId).toEqual(variant._id);
-    //   expect(newVariant.inventoryQuantity).toEqual(newQty);
-    //   return done();
-    // });
-
-    // it("should create inventory variants with prefix by admin", function (done) {
-    //   spyOn(Roles, "userIsInRole").and.returnValue(true);
-    //   const product = Factory.create("product");
-    //   const variant = product.variants[0];
-    //   const qty = _.random(1, 100);
-    //   expect(_.size(product.variants)).toEqual(1);
-    //   // create variant
-    //   Meteor.call("products/createInventoryVariants", product._id,
-    //     variant._id, qty, "jasmine");
-    //   // check variants
-    //   const newProduct = Products.findOne(product._id);
-    //   const newVariant = newProduct.variants[0];
-    //   const newInventoryVariant = newProduct.variants[qty];
-    //   // check that we added inventory variants
-    //   // and update parent variant qty
-    //   expect(_.size(newProduct.variants)).toEqual(qty + 1);
-    //   expect(newVariant.inventoryQuantity).toEqual(qty);
-    //   // check one of the new variants
-    //   expect(newInventoryVariant.type).toEqual("inventory");
-    //   expect(newInventoryVariant.parentId).toEqual(variant._id);
-    //   expect(newInventoryVariant.barcode).toContain("jasmine");
-    //
-    //   return done();
-    // });
-
-  //   it("should create inventory variants with prefix by admin", function (done) {
-  //     spyOn(Roles, "userIsInRole").and.returnValue(true);
-  //     const product = Factory.create("product");
-  //     const productVariant = product.variants[0];
-  //     const qty = _.random(1, 100);
-  //     const initialQty = productVariant.inventoryQuantity;
-  //     const optionVariants = [];
-  //     const inventoryVariants = [];
-  //
-  //     expect(_.size(product.variants)).toEqual(1);
-  //     optionVariantId = Meteor.call("products/cloneVariant",
-  //       product._id, productVariant._id, productVariant._id);
-  //     // create test variant
-  //     Meteor.call("products/createInventoryVariants", product._id,
-  //       optionVariantId, qty, "jasmine");
-  //     // check results
-  //     const newProduct = Products.findOne(product._id);
-  //     const newProductVariant = newProduct.variants[0];
-  //     for (let variant of newProduct.variants) {
-  //       if (variant._id === optionVariantId) {
-  //         optionVariants.push(variant);
-  //       }
-  //     }
-  //
-  //     let optionVariant = optionVariants[0];
-  //     const newOptionVariant = optionVariants[0];
-  //     for (let variant of newProduct.variants) {
-  //       if (variant.type === "inventory") {
-  //         inventoryVariants.push(variant);
-  //       }
-  //     }
-  //
-  //     const newInventoryVariant = inventoryVariants[0];
-  //     expect(_.size(newProduct.variants)).toEqual(qty + 2);
-  //     expect(newInventoryVariant.type).toEqual("inventory");
-  //     expect(newInventoryVariant.parentId).toEqual(optionVariant._id);
-  //     expect(newInventoryVariant.barcode).toContain("jasmine");
-  //     expect(newOptionVariant.inventoryQuantity).toEqual(qty);
-  //     expect(newProductVariant.inventoryQuantity).toEqual(qty);
-  //     return done();
-  //   });
   });
 
   describe("createProduct", function () {
@@ -471,10 +363,89 @@ describe("core product methods", function () {
           $ne: product._id
         }
       }).fetch()[0];
-      // TODO https://github.com/reactioncommerce/reaction/issues/514
       expect(productCloned.title).toEqual(product.title);
+      expect(productCloned.handle).toEqual(product.handle + "-copy");
       expect(productCloned.pageTitle).toEqual(product.pageTitle);
       expect(productCloned.description).toEqual(product.description);
+      return done();
+    });
+
+    it(
+      "product should be cloned with all variants and child variants with equal data," +
+      "but not the same `_id`s",
+      done => {
+        let product;
+        spyOn(Roles, "userIsInRole").and.returnValue(true);
+        product = Factory.create("product");
+        for (let i = 0; i < 2; i++) {
+          Meteor.call("products/cloneVariant", product._id, product.variants[
+              0]._id,
+            product.variants[0]._id);
+        }
+        product = Products.findOne(product._id);
+        expect(product.variants.length).toEqual(3);
+        const variant = Object.assign({}, product.variants[0], {
+          title: "test variant 1",
+          price: 7
+        });
+        const optionOne = Object.assign({}, product.variants[1], {
+          title: "test option 1",
+          price: 7,
+          inventoryQuantity: 10
+        });
+        const optionTwo = Object.assign({}, product.variants[2], {
+          title: "test option 2",
+          price: 17,
+          inventoryQuantity: 20
+        });
+        Meteor.call("products/updateVariant", variant);
+        Meteor.call("products/updateVariant", optionOne);
+        Meteor.call("products/updateVariant", optionTwo);
+        Meteor.call("products/cloneProduct", product);
+        const productCloned = Products.find({
+          _id: {
+            $ne: product._id
+          }
+        }).fetch()[0];
+        expect(productCloned.variants[0].title).toEqual(product.variants[
+          0].title);
+        expect(productCloned.variants[0].price).toEqual(product.variants[
+          0].price);
+        expect(productCloned.variants[0]._id).not.toEqual(product.variants[
+          0]._id);
+
+        expect(productCloned.variants[1].title).toEqual(product.variants[
+          1].title);
+        expect(productCloned.variants[1].price).toEqual(product.variants[
+          1].price);
+        expect(productCloned.variants[1].inventoryQuantity)
+          .toEqual(product.variants[1].inventoryQuantity);
+        expect(productCloned.variants[1]._id).not.toEqual(product.variants[
+          1]._id);
+        expect(productCloned.variants[1].parentId).toEqual(
+          productCloned.variants[0]._id);
+
+        expect(productCloned.variants[2].title).toEqual(product.variants[
+          2].title);
+        expect(productCloned.variants[2].price).toEqual(product.variants[
+          2].price);
+        expect(productCloned.variants[2].inventoryQuantity)
+          .toEqual(product.variants[2].inventoryQuantity);
+        expect(productCloned.variants[2]._id).not.toEqual(product.variants[
+          2]._id);
+        expect(productCloned.variants[2].parentId).toEqual(
+          productCloned.variants[0]._id);
+
+        return done();
+      });
+
+    it(
+      "product group cloning should create the same number of new products",
+      done => {
+        return done();
+      });
+
+    it("all hierarchy media should be cloned", done => {
       return done();
     });
   });
@@ -538,18 +509,26 @@ describe("core product methods", function () {
         Factory.create("shop"); // Create shop so that ReactionCore.getShopId() doesn't fail
         let product = Factory.create("product");
         let tagName = "Product Tag";
-        expect(Tags.findOne({name: tagName})).toEqual(void 0);
+        expect(Tags.findOne({
+          name: tagName
+        })).toEqual(void 0);
 
-        Meteor.call("products/updateProductTags", product._id, tagName, null);
-        let tag = Tags.findOne({name: tagName});
+        Meteor.call("products/updateProductTags", product._id,
+          tagName, null);
+        let tag = Tags.findOne({
+          name: tagName
+        });
         expect(tag.slug).toEqual(getSlug(tagName));
 
-        product = Products.findOne({_id: product._id});
+        product = Products.findOne({
+          _id: product._id
+        });
         expect(product.hashtags).toContain(tag._id);
         return done();
       });
 
-    it("should add existing tag when passed existing tag and tag._id by admin",
+    it(
+      "should add existing tag when passed existing tag and tag._id by admin",
       function (done) {
         let product;
         let tag;
@@ -612,6 +591,70 @@ describe("core product methods", function () {
       expect(Tags.find().count()).toEqual(0);
       return done();
     });
+  });
+
+  describe("setHandle", () => {
+    beforeEach(() => {
+      Products.remove({});
+      return Tags.remove({});
+    });
+
+    it("should throw 403 error by non admin", done => {
+      spyOn(Roles, "userIsInRole").and.returnValue(false);
+      spyOn(Products, "update");
+      const product = Factory.create("product");
+      expect(() => Meteor.call("products/setHandle", product._id))
+        .toThrow(new Meteor.Error(403, "Access Denied"));
+      expect(Products.update).not.toHaveBeenCalled();
+      return done();
+    });
+
+    it("should set handle for product by admin", done => {
+      spyOn(Roles, "userIsInRole").and.returnValue(true);
+      spyOn(ReactionCore, "hasPermission").and.returnValue(true);
+      let product = Factory.create("product");
+      const productHandle = product.handle;
+      Meteor.call("products/updateProductField", product._id,
+        "title", "new product name");
+      Meteor.call("products/setHandle", product._id);
+      product = Products.findOne({
+        _id: product._id
+      });
+      expect(product.handle).not.toEqual(productHandle);
+      return done();
+    });
+
+    it("should set handle correctly", done => {
+      spyOn(Roles, "userIsInRole").and.returnValue(true);
+      let product = Factory.create("product");
+      Meteor.call("products/updateProductField", product._id,
+        "title", "new product name");
+      Meteor.call("products/setHandle", product._id);
+      product = Products.findOne({
+        _id: product._id
+      });
+      expect(product.handle).toEqual("new-product-name");
+      return done();
+    });
+
+    it("products with the same title should receive correct handle",
+      done => {
+        spyOn(Roles, "userIsInRole").and.returnValue(true);
+        let product = Factory.create("product");
+        Meteor.call("products/cloneProduct", product);
+        Meteor.call("products/cloneProduct", product);
+        let newProducts = Products.find({
+          _id: {
+            $ne: product._id
+          }
+        }).fetch();
+        const productCloned = newProducts[0];
+        const productCloned2 = newProducts[1];
+        expect(productCloned.handle).toEqual(product.handle + "-copy");
+        expect(productCloned2.handle).toEqual(product.handle +
+          "-copy-2");
+        return done();
+      });
   });
 
   describe("setHandleTag", function () {
@@ -682,7 +725,8 @@ describe("core product methods", function () {
         updatedAt: new Date()
       };
       expect(function () {
-        return Meteor.call("products/updateProductPosition", product._id, position);
+        return Meteor.call("products/updateProductPosition",
+          product._id, position);
       }).not.toThrow(new Meteor.Error(403, "Access Denied"));
 
       const updatedProduct = Products.findOne(product._id);
